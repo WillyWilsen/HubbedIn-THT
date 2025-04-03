@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: birthday_reminder_app
+    ports:
+      - '3000:3000'
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/birthday_reminder
+    depends_on:
+      - mongodb
+    networks:
+      - birthday_reminder_network
+
+  mongodb:
+    image: mongo:4.4
+    container_name: birthday_reminder_db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - birthday_reminder_network
+
+networks:
+  birthday_reminder_network:
+    driver: bridge
+
+volumes:
+  mongo_data:
