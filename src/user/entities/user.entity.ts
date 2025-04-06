@@ -15,7 +15,13 @@ export class User {
   birthday: Date;
 
   @Prop({ required: true })
+  birthdayMonthDay: string;
+
+  @Prop({ required: true })
   timezone: string;
+
+  @Prop({ type: Date, default: null })
+  lastBirthdayMessageSentAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

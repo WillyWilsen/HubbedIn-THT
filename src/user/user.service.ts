@@ -10,6 +10,7 @@ import { User, UserDocument } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as mongoose from 'mongoose';
+import * as moment from 'moment-timezone';
 
 @Injectable()
 export class UserService {
@@ -23,7 +24,10 @@ export class UserService {
 
     const user = new this.userModel({
       ...userDto,
-      birthday: new Date(userDto.birthday),
+      birthday: moment.tz(userDto.birthday, userDto.timezone).toDate(),
+      birthdayMonthDay: moment
+        .tz(userDto.birthday, userDto.timezone)
+        .format('MM-DD'),
     });
 
     return await user.save();
@@ -42,26 +46,33 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, updateDto: UpdateUserDto): Promise<User> {
+  async update(id: string, userDto: UpdateUserDto): Promise<User> {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid ID format');
     }
 
-    if (updateDto.email) {
-      const existingUser = await this.userModel.findOne({
-        email: updateDto.email,
-      });
+    const existingUser = await this.userModel.findOne({
+      email: userDto.email,
+    });
+
+    if (userDto.email) {
       if (existingUser && existingUser.id !== id) {
         throw new ConflictException('Email is already in use');
       }
     }
 
-    if (updateDto.birthday) {
-      updateDto.birthday = new Date(updateDto.birthday);
+    const timezone = existingUser?.timezone || userDto.timezone;
+    if (userDto.birthday) {
+      userDto.birthday = moment
+        .tz(userDto.birthday, timezone as string)
+        .toDate();
+      userDto.birthdayMonthDay = moment
+        .tz(userDto.birthday, timezone as string)
+        .format('MM-DD');
     }
 
     const updatedUser = await this.userModel
-      .findByIdAndUpdate(id, updateDto, { new: true })
+      .findByIdAndUpdate(id, userDto, { new: true })
       .exec();
 
     if (!updatedUser) {

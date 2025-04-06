@@ -38,6 +38,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  birthdayMonthDay?: string;
+
+  @IsOptional()
+  @IsString()
   @Validate(IsValidTimezoneConstraint)
   timezone?: string;
 }

@@ -5,20 +5,15 @@ import { User } from '../user/entities/user.entity';
 import * as moment from 'moment-timezone';
 import { Logger } from '@nestjs/common';
 
+const mockUserModel = {
+  find: jest.fn(),
+};
+
 describe('BirthdayWorker', () => {
   let worker: BirthdayWorker;
   let logSpy: jest.SpyInstance;
-  let mockUserModel: {
-    find: jest.Mock;
-  };
 
   beforeEach(async () => {
-    mockUserModel = {
-      find: jest.fn().mockReturnValue({
-        exec: jest.fn().mockResolvedValue([]),
-      }),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BirthdayWorker,
@@ -42,11 +37,13 @@ describe('BirthdayWorker', () => {
         name: 'Alice',
         birthday: moment(today).tz('America/New_York').format(),
         timezone: 'America/New_York',
+        save: jest.fn().mockResolvedValue(true),
       },
       {
         name: 'Bob',
         birthday: moment(today).tz('Europe/London').format(),
         timezone: 'Europe/London',
+        save: jest.fn().mockResolvedValue(true),
       },
     ];
 
@@ -54,7 +51,9 @@ describe('BirthdayWorker', () => {
       exec: jest.fn().mockResolvedValue(mockUsers),
     });
 
-    jest.spyOn(moment, 'utc').mockReturnValue(moment.utc().hour(13)); // 13:00 UTC = 9 AM Eastern Time
+    jest
+      .spyOn(moment, 'tz')
+      .mockReturnValue(moment.tz('2024-04-04 09:00:00', 'America/New_York'));
 
     await worker.checkAndSendBirthdayMessages();
 
